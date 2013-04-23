@@ -182,7 +182,7 @@ end
 
 
 # テストコード #
-pocket = ALPocket.new
+#pocket = ALPocket.new
 
 #テストポスト
-pocket.post("http://getpocket.com/","テスト",nil)
+#pocket.post("http://getpocket.com/","テスト",nil)
