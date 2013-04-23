@@ -5,15 +5,16 @@
     require 'oauth'
     require 'json'
     require 'pp'
-    require '/home/pi/rss/access_token.rb'
-    require '/home/pi/rss/pocket/pocketPost.rb'
+    require 'logger'
+    require './access_token.rb'
+    require './ALPocket.rb'
 module TwitterBot
     class Bot
         include AccessToken
 
         MY_SCREEN_NAME="zwranian_rss"
         BOT_USER_AGENT="rssRubyScript"
-        HTTPS_CA_FILE_PATH="./verisign.cer"
+        HTTPS_CA_FILE_PATH=OpenSSL::X509::DEFAULT_CERT_FILE
 
         def initialize 
             @consumer = OAuth::Consumer.new(CONSUMER_KEY,
@@ -24,7 +25,12 @@ module TwitterBot
                                                     ACCESS_TOKEN,
                                                     ACCESS_TOKEN_SECRET
                                                     )
-            @pocketPost =PocketPost.new()
+            @pocket =ALPocket.new
+            
+            @log = Logger.new("./tweet.log")
+#            @log.level = Logger::WARN
+            
+            @pocket.setLogger(@log)
         end
 
         def connect 
@@ -75,8 +81,9 @@ module TwitterBot
                                     text_split.each {|t|
                                         title = title+t
                                     }
-                                    puts "title: "+title+", url: "+url
-                                    @pocketPost.post(url,title)
+                                    id = json['target_object']['id']
+                                    @log.info("(bot) add title: "+title+", url: "+url)
+                                    @pocket.post(url,title,id)
                                 end
                             end
                         else
@@ -84,10 +91,11 @@ module TwitterBot
                         end
                     end
                 rescue Timeout::Error,StandardError
-                    puts "re connnect"
+                    @log.warn("Reconnnecting Streaming API")
                 end
             end
         end     
     end  
 end
-      TwitterBot::Bot.new.run          
+
+TwitterBot::Bot.new.run          
